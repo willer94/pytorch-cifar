@@ -2,7 +2,6 @@
 more details can be found in maskrcnn_benchmark (https://github.com/facebookresearch/maskrcnn-benchmark)
 """
 import os
-from config import _C as cfg
 import torch
 
 class CheckPointer(object):

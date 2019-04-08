@@ -5,7 +5,7 @@ from torchvision.datasets.cifar import CIFAR10, CIFAR100
 from torchvision.transforms import transforms
 from torch.utils.data import DataLoader
 from torch.backends import cudnn
-from config import _C as cfg
+from config.default import _C as cfg
 from CheckPointer import CheckPointer
 from collections import deque
 import numpy as np
@@ -239,7 +239,8 @@ def test_net(cfg, logger, model):
             model=model,
             device=device,
             test_loader=test_loader,
-            criterion=criterion)
+            criterion=criterion,
+            logger=logger)
 
 
 if __name__ == '__main__':
