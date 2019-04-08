@@ -120,9 +120,7 @@ def do_train(cfg, logger, model, device, train_loader, optimizer, lr_scheduler, 
         arguments['epoch'] = epoch+1
         model.train()
         lr_scheduler.step(epoch=epoch)
-        # train_loss = 0.0
-        # correct = 0
-        # total = 0
+
         max_len = cfg.TRAIN.MAX_LEN
         train_loss = deque(maxlen=max_len)
         correct = deque(maxlen=max_len)
@@ -138,13 +136,6 @@ def do_train(cfg, logger, model, device, train_loader, optimizer, lr_scheduler, 
             loss.backward()
             optimizer.step()
             _, predict = outputs.max(1)
-
-            # train_loss += loss.item()
-            # total += labels.shape[0]
-            # correct += predict.eq(labels).sum().item()
-            #
-            # print('epoch: %3d, batch: %4d, loss: %.3f, Acc: %.3f%% (%d/%d)' %
-            #       (epoch, batch_idx, train_loss / (batch_idx + 1), 100. * (correct / total), correct, total))
 
             train_loss.append(loss.item())
             correct_current = predict.eq(labels).sum().item()
