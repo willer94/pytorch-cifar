@@ -3,7 +3,6 @@ more details can be found in maskrcnn_benchmark (https://github.com/facebookrese
 """
 import os
 import torch
-from collections import OrderedDict
 
 
 class CheckPointer(object):
