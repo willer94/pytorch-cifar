@@ -3,19 +3,28 @@ more details can be found in maskrcnn_benchmark (https://github.com/facebookrese
 """
 import os
 import torch
+from maskrcnn_benchmark.utils.model_serialization import load_state_dict
 
 class CheckPointer(object):
-    def __init__(self, cfg, logger, model, optimizer=None, lr_scheduler=None, save_dir=''):
+    def __init__(self, cfg, logger, model, optimizer=None, scheduler=None, save_dir='', save_to_disk=False):
         self.cfg = cfg.clone()
         self.model = model
         self.optimizer = optimizer
-        self.lr_scheduler = lr_scheduler
+        self.lr_scheduler = scheduler
         self.save_dir = save_dir
         self.logger = logger
+        self.save_to_disk = save_to_disk
 
     def save(self, name, **kwargs):
+        if self.save_to_disk is False:
+            return
+        if self.save_dir == '':
+            return
+
         data = {}
+
         data['model'] = self.model.state_dict()
+
         if self.optimizer is not None:
             data['optimizer'] = self.optimizer.state_dict()
         if self.lr_scheduler is not None:
@@ -31,12 +40,12 @@ class CheckPointer(object):
         if self.has_checkpoint():
             f = self.get_checkpoint_file()
         if f is None:
-            print('no checkpoint file was found')
+            self.logger.info('no checkpoint file was found')
             return {}
 
-        checkpoint = torch.load(f, map_location=torch.device("cpu"))
         self.logger.info('load model from %s\n' % f)
-        self.model.load_state_dict(checkpoint.pop('model'))
+        checkpoint = self._load_file(f)
+        self._load_model(checkpoint)
         if 'optimizer' in checkpoint and self.optimizer is not None:
             self.optimizer.load_state_dict(checkpoint.pop('optimizer'))
         if 'lr_scheduler' in checkpoint and self.lr_scheduler is not None:
@@ -63,3 +72,9 @@ class CheckPointer(object):
         save_file = os.path.join(self.save_dir, "last_checkpoint")
         with open(save_file, "w") as f:
             f.write(last_filename)
+
+    def _load_file(self, f):
+        return torch.load(f, map_location=torch.device("cpu"))
+
+    def _load_model(self, checkpoint):
+        load_state_dict(self.model, checkpoint.pop("model"))
