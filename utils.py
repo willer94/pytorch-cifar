@@ -48,9 +48,9 @@ def setup_logger(name, save_dir, distributed_rank, filename="log.txt"):
 def do_train(cfg, logger, model, device, train_loader, optimizer, lr_scheduler, criterion, checkpointer, arguments):
 
     epoch_num = cfg.TRAIN.EPOCH
-    logger.info('take %d iter steps: ' % (epoch_num * len(train_loader)))
+    
     start_epoch = arguments['epoch']
-
+    logger.info('take %d iter steps: ' % ((epoch_num-start_epoch) * len(train_loader)))
     time_begin = time.time()
     for epoch in range(start_epoch, epoch_num):
         arguments['epoch'] = epoch+1

@@ -3,7 +3,8 @@ more details can be found in maskrcnn_benchmark (https://github.com/facebookrese
 """
 import os
 import torch
-from maskrcnn_benchmark.utils.model_serialization import load_state_dict
+from collections import OrderedDict
+
 
 class CheckPointer(object):
     def __init__(self, cfg, logger, model, optimizer=None, scheduler=None, save_dir='', save_to_disk=False):
@@ -45,7 +46,7 @@ class CheckPointer(object):
 
         self.logger.info('load model from %s\n' % f)
         checkpoint = self._load_file(f)
-        self._load_model(checkpoint)
+        self.model.load_state_dict(checkpoint.pop('model'))
         if 'optimizer' in checkpoint and self.optimizer is not None:
             self.optimizer.load_state_dict(checkpoint.pop('optimizer'))
         if 'lr_scheduler' in checkpoint and self.lr_scheduler is not None:
@@ -76,5 +77,3 @@ class CheckPointer(object):
     def _load_file(self, f):
         return torch.load(f, map_location=torch.device("cpu"))
 
-    def _load_model(self, checkpoint):
-        load_state_dict(self.model, checkpoint.pop("model"))
