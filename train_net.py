@@ -101,8 +101,12 @@ if __name__ == '__main__':
 
     cfg.merge_from_file(args.config_file)
     cfg.freeze()
-    if not os.path.isdir(cfg.OUTPUT_DIR):
-        os.mkdir(cfg.OUTPUT_DIR)
+    if get_rank() == 0:
+        if not os.path.isdir(cfg.OUTPUT_DIR):
+            try:
+                os.mkdir(cfg.OUTPUT_DIR)
+            except FileExistsError:
+                print('%s alreadly exist' % cfg.OUTPUT_DIR)
 
 
     is_distributed = (num_gpus > 1)

@@ -3,6 +3,14 @@ from collections import deque
 import torch.distributed as dist
 import numpy as np
 
+
+def get_world_size():
+    if not dist.is_available():
+        return 1
+    if not dist.is_initialized():
+        return 1
+    return dist.get_world_size()
+
 def get_rank():
     if not dist.is_available():
         return 0
@@ -45,6 +53,23 @@ def setup_logger(name, save_dir, distributed_rank, filename="log.txt"):
     return logger
 
 
+def reduce_loss_list(loss_item):
+    """
+    Reduce the loss item from all processes so that process with rank 0 has the average results.
+    Return a item(tensor) with the same fields as loss_item, after reduction.
+    """
+    world_size = get_world_size()
+    if world_size < 2:
+        return loss_item
+    with torch.no_grad():
+        all_losses = []
+        all_losses.append(loss_item)
+        all_losses = torch.stack(all_losses, dim=0)
+        dist.reduce(all_losses, dst=0)
+        if dist.get_rank() == 0:
+            all_losses /= world_size
+    return all_losses
+
 def do_train(cfg, logger, model, device, train_loader, optimizer, lr_scheduler, criterion, checkpointer, arguments):
 
     epoch_num = cfg.TRAIN.EPOCH
@@ -71,6 +96,9 @@ def do_train(cfg, logger, model, device, train_loader, optimizer, lr_scheduler, 
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
+
+            loss = reduce_loss_list(loss)
+
             _, predict = outputs.max(1)
 
             train_loss.append(loss.item())
